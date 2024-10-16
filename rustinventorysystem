@@ -1,0 +1,116 @@
+use std::collections::HashMap;
+
+#[derive(Debug)]
+struct Item {
+    name: String,
+    price: f64,
+    quantity: u32,
+}
+
+impl Item {
+    fn new(name: &str, price: f64, quantity: u32) -> Self {
+        Self {
+            name: name.to_string(),
+            price,
+            quantity,
+        }
+    }
+
+    fn add_stock(&mut self, quantity: u32) {
+        self.quantity += quantity;
+        println!("Added {} units of {}. New stock: {}", quantity, self.name, self.quantity);
+    }
+
+    fn remove_stock(&mut self, quantity: u32) -> bool {
+        if self.quantity >= quantity {
+            self.quantity -= quantity;
+            println!("Removed {} units of {}. Remaining stock: {}", quantity, self.name, self.quantity);
+            true
+        } else {
+            println!("Insufficient stock for {}. Available: {}", self.name, self.quantity);
+            false
+        }
+    }
+}
+
+struct Store {
+    inventory: HashMap<String, Item>,
+    sales: f64,
+    purchases: f64,
+}
+
+impl Store {
+    fn new() -> Self {
+        Self {
+            inventory: HashMap::new(),
+            sales: 0.0,
+            purchases: 0.0,
+        }
+    }
+
+    fn add_item(&mut self, name: &str, price: f64, quantity: u32) {
+        let item = Item::new(name, price, quantity);
+        self.inventory.insert(name.to_string(), item);
+        println!("Added {} to the inventory.", name);
+    }
+
+    fn purchase_item(&mut self, name: &str, quantity: u32, cost: f64) {
+        match self.inventory.get_mut(name) {
+            Some(item) => {
+                item.add_stock(quantity);
+                self.purchases += cost * quantity as f64;
+                println!("Purchased {} units of {} for ${:.2}. Total purchases: ${:.2}", quantity, name, cost * quantity as f64, self.purchases);
+            }
+            None => println!("Item {} not found in inventory.", name),
+        }
+    }
+
+    fn sell_item(&mut self, name: &str, quantity: u32) {
+        match self.inventory.get_mut(name) {
+            Some(item) => {
+                if item.remove_stock(quantity) {
+                    let sale_value = item.price * quantity as f64;
+                    self.sales += sale_value;
+                    println!("Sold {} units of {} for ${:.2}. Total sales: ${:.2}", quantity, name, sale_value, self.sales);
+                }
+            }
+            None => println!("Item {} not found in inventory.", name),
+        }
+    }
+
+    fn display_inventory(&self) {
+        println!("\nInventory:");
+        for (name, item) in &self.inventory {
+            println!("Item: {}, Price: ${:.2}, Quantity: {}", name, item.price, item.quantity);
+        }
+    }
+
+    fn display_sales_and_purchases(&self) {
+        println!("\nTotal Sales: ${:.2}", self.sales);
+        println!("Total Purchases: ${:.2}", self.purchases);
+    }
+}
+
+fn main() {
+    let mut store = Store::new();
+
+    // Add items to inventory
+    store.add_item("Apples", 0.5, 100);
+    store.add_item("Bananas", 0.3, 150);
+    store.add_item("Oranges", 0.7, 80);
+
+    // Purchase items
+    store.purchase_item("Apples", 50, 0.4);
+    store.purchase_item("Bananas", 30, 0.25);
+
+    // Sell items
+    store.sell_item("Apples", 20);
+    store.sell_item("Bananas", 50);
+    store.sell_item("Oranges", 40);
+
+    // Display the current inventory
+    store.display_inventory();
+
+    // Display total sales and purchases
+    store.display_sales_and_purchases();
+}
